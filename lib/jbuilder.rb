@@ -44,13 +44,15 @@ class Jbuilder < ActiveSupport::BasicObject
     jbuilder.target!
   end
 
-  @@key_formatter = KeyFormatter.new
-	@@ignore_nil    = false
+  @@key_formatter       = KeyFormatter.new
+	@@ignore_nil          = false
+	@@nil_to_empty_string = false
 
-  def initialize(key_formatter = @@key_formatter.clone, ignore_nil = @@ignore_nil)
+  def initialize(key_formatter = @@key_formatter.clone, ignore_nil = @@ignore_nil, nil_to_empty_string = @@nil_to_empty_string)
     @attributes = ::ActiveSupport::OrderedHash.new
     @key_formatter = key_formatter
-		@ignore_nil = ignore_nil
+    @ignore_nil = ignore_nil
+    @nil_to_empty_string = nil_to_empty_string
   end
 
   # Dynamically set a key value pair.
@@ -138,6 +140,15 @@ class Jbuilder < ActiveSupport::BasicObject
   # Same as instance method ignore_nil! except sets the default.
   def self.ignore_nil(value = true)
     @@ignore_nil = value
+  end
+
+	# Similar to ignore nil but turns nil values into empty string ""'s
+  def nil_to_empty_string!(value = true)
+    @nil_to_empty_string = value
+  end
+
+  def self.nil_to_empty_string(value = true)
+    @@nil_to_empty_string = value
   end
 
   # Turns the current element into an array and yields a builder to add a hash.
@@ -245,7 +256,7 @@ class Jbuilder < ActiveSupport::BasicObject
   protected
     def _set_value(key, value)
 			unless @ignore_nil && value.nil?
-        @attributes[@key_formatter.format(key)] = value
+        @attributes[@key_formatter.format(key)] = @nil_to_empty_string ? (value || "") : value
 			end
     end
 
